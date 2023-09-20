@@ -1,8 +1,8 @@
-function alphaToNum(newkey) {
+function alphaToNum(nuw) {
     let numKey = [];
-    for (let a = 0; a < newkey.length; a++) {
+    for (let a = 0; a < nuw.length; a++) {
 
-        switch (newkey[a]) {
+        switch (nuw[a]) {
             case "A":
                 numKey.push(10);
                 break;
@@ -34,25 +34,35 @@ function alphaToNum(newkey) {
                 numKey.push(19);
                 break;
             default:
-                numKey.push(newkey[a])
+                numKey.push(nuw[a])
         }
     }
     return numKey;
 }
-function divmod(numerator, denominator) {
-    let quotient = Math.floor(numerator / denominator);
-    let remainder = numerator % denominator;
-    // bin += remainder.toString();
-    bin.push(remainder);
-    if (quotient === 0) {
-        bin = bin.reverse().join("");
-        // console.log(bin)
-        binaryNum.push(bin.padStart(4, '0'));
-        bin = []; // Reset the bin string for the next digit
-        return;
-    } else {
-        divmod(quotient, 2);
+function Binary(newkey1) {
+    let BinaryNum = [];
+    let bin = []; // Initialize bin outside the loop
+    for (let i = 0; i < newkey1.length; i++) {
+        // console.log(key[i]);
+        divmod(Number(newkey1[i]), 2);
     }
+    function divmod(numerator, denominator) {
+
+        let quotient = Math.floor(numerator / denominator);
+        let remainder = numerator % denominator;
+        // bin += remainder.toString();
+        bin.push(remainder);
+        if (quotient === 0) {
+            bin = bin.reverse().join("");
+            // console.log(bin)
+            BinaryNum.push(bin.padStart(4, '0'));
+            bin = []; // Reset the bin string for the next digit
+            return;
+        } else {
+            divmod(quotient, 2);
+        }
+    }
+    return BinaryNum;
 }
 function key16(string) {
     __16keys = [];
@@ -81,6 +91,7 @@ function key16(string) {
         console.log("keys", keys)
         __16keys.push(keys)
         // console.log(__16keys)
+        
     }
 
     let bitstring = "";
@@ -142,48 +153,116 @@ function key16(string) {
         }
     }
     // [c0, d0] = leftShift(c0, d0);
-    console.log("first 28 bits=",bitstring.slice(0, 28))
+    console.log("first 28 bits=", bitstring.slice(0, 28))
     console.log("remaing 28 bits=", bitstring.slice(28), 1)
     leftShift(bitstring.slice(0, 28), bitstring.slice(28), 1);
     // console.log("return value=", [c0, d0])
-
+    return __16keys
 }
-function encrypt(pt,arr){
-    // let array=arr;
-    let LB=pt.slice(0,32);
-    let RB=pt.slice(32)
-    for(let r=0;r<=arr.length;r++){
-        let l0=LB;
-        let L1=RB;
-        let arrKey=arr[r]
-        console.log("round key =",arrKey)
-        
-        function round(l1,arrKey){
-            let eTable=[]
-            
+function IP(string) {
+    let Bitstring = "";
+    let ipTable = [58, 50, 42, 34, 26, 18, 10, 2,
+        60, 52, 44, 36, 28, 20, 12, 4,
+        62, 54, 46, 38, 30, 22, 14, 6,
+        64, 56, 48, 40, 32, 24, 16, 8,
+        57, 49, 41, 33, 25, 17, 9, 1,
+        59, 51, 43, 35, 27, 19, 11, 3,
+        61, 53, 45, 37, 29, 21, 13, 5,
+        63, 55, 47, 39, 31, 23, 15, 7]
+
+    for (let p = 0; p < ipTable.length; p++) {
+        let ipNum = ipTable[p];
+        for (let s = 0; s < string.length; s++) {
+
+            let incS = s + 1
+            // console.log("index s=",s,"incs=",incS,"bit on s=",string[s])
+            if (ipNum == incS) {
+                let bit = string[s];
+                // console.log("bit", bit)
+                Bitstring += bit;
+
+            }
+        }
+    }
+    console.log("bit String=", Bitstring, "length of bit string=", Bitstring.length)
+    return Bitstring
+}
+function encrypt(ptBits, arr) {
+    let LB = ptBits.slice(0, 32);
+    let RB = ptBits.slice(32)
+    for (let r = 0; r < arr.length; r++) {
+        console.log(arr[r])
+        let l0 = LB;
+        let R1 = RB;
+        let arrKey = arr[r]
+        console.log("round key =", arrKey,"length of key",arrKey.length)
+        round(R1, l0, arrKey)
+        function round(R1, l0, arrKey) {
+            let eBits = ""
+            let eTable = [32, 1, 2, 3, 4, 5, 4, 5,
+                6, 7, 8, 9, 8, 9, 10, 11,
+                12, 13, 12, 13, 14, 15, 16, 17,
+                16, 17, 18, 19, 20, 21, 20, 21,
+                22, 23, 24, 25, 24, 25, 26, 27,
+                28, 29, 28, 29, 30, 31, 32, 1];
+            for (let e = 0; e < eTable.length; e++) {
+                let eNum = eTable[e];
+                for (let s = 0; s < R1.length; s++) {
+
+                    let incS = s + 1
+                    // console.log("index s=",s,"incs=",incS,"bit on s=",string[s])
+                    if (eNum == incS) {
+                        let bit = R1[s];
+                        // console.log("bit", bit)
+                        eBits += bit;
+
+                    }
+                }
+            }
+            console.log(" e bits=",eBits)
+           
+            zor(eBits,l0,arrKey)
+
+            // xor function 
+            function zor(t,l0,f){
+                let xor="";
+                for(e=0;e<t.length;e++){
+                        if(t[e]===f[e]){
+                            xor+=1
+                        }
+                        else{
+                            xor+=0
+                        }
+                }
+                console.log(xor)
+            }
+
         }
     }
 }
 
-let binaryNum = [];
-let key = "133457799BBCDFF1";
-let newkey = []
-console.log(newkey)
-for (let k = 0; k < key.length; k++) {
-    newkey.push(key[k]);
-}
-let newkey1 = alphaToNum(newkey);
-console.log(newkey1)
 
-let bin = []; // Initialize bin outside the loop
-for (let i = 0; i < newkey1.length; i++) {
-    // console.log(key[i]);
-    divmod(Number(newkey1[i]), 2);
-}
+// console.log(binaryNum, "total no of bits in array=length of array X each element length ", (binaryNum.length) * (binaryNum[0].length));
+// const key16Array = key16(binaryNum.join(""));
+// console.log(binaryNum.join(""))
+// // console.log(binaryNum.join(""))
+// // console.log(key16Array);
 
-let ptInput="0124536ADCFEFBAE";
-
+let key = "12345678ABCDEFAA"
+let keyNum = alphaToNum(key);
+let binaryNum = Binary(keyNum);
 console.log(binaryNum, "total no of bits in array=length of array X each element length ", (binaryNum.length) * (binaryNum[0].length));
 const key16Array = key16(binaryNum.join(""));
 console.log(binaryNum.join(""))
-// console.log(key16Array);
+console.log("16 keys array=",key16Array)
+
+let pt = "ABCDEFCDABCDEFAA"
+let ptNum = alphaToNum(pt);
+console.log(ptNum)
+
+let ptBinary = Binary(ptNum);
+console.log(ptBinary)
+let ipBits = IP(ptBinary)
+let encryptedText = encrypt(ipBits, key16Array)
+
+
